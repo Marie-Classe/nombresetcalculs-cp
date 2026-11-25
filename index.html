@@ -112,6 +112,15 @@ svg text{font-family:'AccesScript',sans-serif}
 body.focus header,body.focus .chs,body.focus .sbar,body.focus .lvl,body.focus .note{display:none}
 body.focus .app{grid-template-columns:1fr}
 body.focus.menu .chs{display:flex!important;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:min(320px,85vw);z-index:50;background:var(--bg);padding:12px;max-height:none}
+
+.fcw{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0}.fcn{color:var(--muted);font-size:18px}
+.fcard{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;width:min(100%,640px);min-height:300px;border:5px solid var(--blue);border-radius:22px;background:var(--panel);color:var(--fg);padding:18px 22px;text-align:center;cursor:pointer;position:relative;font-size:30px}
+.fcard.back{background:var(--blue-l)}.fck{position:absolute;top:10px;left:16px;font-size:15px;text-transform:uppercase;letter-spacing:.07em;color:var(--blue);font-weight:800}
+.fcb{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:100%}.fcb .fq{font-size:1.15em;font-weight:700}.fcb .fl{font-size:.8em;text-align:left;line-height:1.35}.fcb .fv{max-width:100%;overflow:auto}.fcb .fv svg{max-height:210px;width:auto}
+.fcb .fb{display:inline-block;min-width:2em;border-bottom:4px solid var(--blue);color:var(--blue)}.fcb .fo{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}.fcb .fo span{border:3px solid var(--line);border-radius:12px;padding:2px 14px}
+.fcb b{color:var(--ans,#1c64c4)}.fch{position:absolute;bottom:8px;font-size:14px;color:var(--muted)}
+.fcbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+@media (max-width:860px){.chs{flex-wrap:wrap;overflow:visible;gap:6px}.chs .grp{display:none}.chs button{padding:4px 6px;gap:0}.chs button .cd{font-size:20px;padding:2px 12px}.fcard{font-size:24px;min-height:260px}}
 </style></head>
 <body>
 <header><div><h1>Dans mon cahier ! CP – Nombres et calculs</h1><div class="sub">Atelier de manipulation et exercices corrigés par l’application</div></div>
@@ -330,7 +339,7 @@ const ORDER=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q'
 const TITLES={D:'Les nombres de 10 à 69',F:'Les nombres de 60 à 99',G:'Se repérer dans le tableau des nombres',H:'Comparer des nombres',I:'Ranger plusieurs nombres',J:'Placer des nombres sur une demi-droite graduée',K:'Encadrer un nombre',L:'Sens de l’addition',M:'Addition posée',N:'Addition à trous',O:'Sens de la soustraction',P:'Décomposition langagière des nombres',Q:'Sens de la multiplication : addition itérée',S:'Reculer de 2 en 2, de 5 en 5 ou de 10 en 10',T:'Sens de la division : soustraction itérée',U:'Additionner et soustraire',V:'Compléter une suite organisée',W:'Les nombres ordinaux'};
 const GRP={A:'Connaître les nombres entiers',H:'Manipuler les nombres entiers',L:'Les 4 opérations',V:'Suites et ordinaux'};
 /* ---------- état ---------- */
-let FR=new Set(),target=null,GV=null,fn=17,view='ex',cur='A',lv=1,sr=0,mode='eleve',shown=false,S={},done={},foc=false,menu=false;
+let FR=new Set(),target=null,GV=null,fn=17,view='ex',cur='A',lv=1,sr=0,mode='eleve',shown=false,S={},done={},foc=false,menu=false,fc=0,fcf=false,fcd={};
 const SPEC={};
 function items(c,e){const k=c+'|'+sr+'|'+e;if(!SPEC[k])SPEC[k]=CHS[c].gen(e,rngf(k)).map(it=>{if(!it.tpl&&!it.kind)it.tpl=(it.pre?it.pre+' ':'')+'___'+(it.post?' '+it.post:'');return it});return SPEC[k]}
 function chBtns(){let h='';ORDER.forEach(c=>{if(GRP[c])h+=`<div class="grp">${GRP[c]}</div>`;const d=CHS[c];h+=`<button data-c="${c}" ${d?'':'disabled'} aria-current="${c==cur}"><span class="cd">${c}</span><span class="sh">${d?d.t:TITLES[c]}${d?'':' · bientôt'}</span></button>`});$('#chs').innerHTML=h}
@@ -341,6 +350,25 @@ function cahierLine(it){const A=[].concat(it.ans);if(it.eq)return '= '+A.join(' 
 function m0html(c,its,rows){const sey=`<div class="sey"><div class="ln"><span class="edl">${cur}</span> n° 0</div>`+its.map((it,i)=>`<div class="ln">${'abc'[i]}) ${cahierLine(it)}</div>`).join('')+'</div>';
   return`<div class="m0w"><div class="hd">Modèle n° 0 : on écrit ensemble, comme dans le cahier</div><div class="left x3">${rows}</div>${sey}<div class="mnote">Le numéro et les lettres a), b), c) se placent comme dans le cahier : ici, sur le lignage Seyès, en écriture cursive.</div></div>`}
 function lessonHTML(c){const z=LES[c]();return`<div class="lesson"><div class="lt"><span class="code">${c}</span> Leçon</div><div class="lrow"><div class="lcol"><div class="lq"><span class="lk">Je retiens</span>${z.r}</div><div class="lxs"><span class="lk">Exemples</span>${z.ex.map(x=>`<div class="lxi">${x}</div>`).join('')}</div></div>${z.v?`<div class="lv">${z.v()}</div>`:''}</div><div class="ltip">💡 ${z.tip}</div></div>`}
+
+function fcQ(it,c){
+  if(it.kind=='cmp')return{f:`<div class="fq">${it.pre} <b>…</b> ${it.post}</div><div class="fo">${it.opts.map(o=>`<span>${o}</span>`).join('')}</div>`,b:`${it.pre} <b>${it.ans}</b> ${it.post}`};
+  if(it.kind=='seq')return{f:`<div class="fq">${it.pre}</div><div class="fo">${it.tags.map(t=>`<span>${t}</span>`).join('')}</div>`,b:`<b>${it.ans.join(' , ')}</b>`};
+  const A=[].concat(it.ans);let k=0;
+  const f=(it.tpl||'').split('___').map((p,j,a)=>colDU(p)+(j<a.length-1?'<b class="fb">?</b>':'')).join('');
+  const b=(it.tpl||'').split('___').map((p,j,a)=>colDU(p)+(j<a.length-1?`<b>${A[k++]}</b>`:'')).join('');
+  return{f:(it.vis?`<div class="fv">${it.vis}</div>`:'')+`<div class="fq">${f}${it.unit?' '+it.unit:''}</div>`,b:(it.vis?`<div class="fv">${it.vis}</div>`:'')+`<div class="fq">${b}${it.unit?' '+it.unit:''}</div>`}}
+function fcDeck(c){
+  const z=LES[c](),d=[];
+  d.push({k:'Leçon',f:`<div class="fq">Qu’est-ce que je dois retenir ?</div>`,b:`<div class="fl">${z.r}</div>${z.v?`<div class="fv">${z.v()}</div>`:''}`});
+  z.ex.forEach(x=>d.push({k:'Exemple',f:`<div class="fq">Je regarde un exemple</div>`,b:`<div class="fl">${x}</div>`}));
+  d.push({k:'Astuce',f:`<div class="fq">💡 Mon astuce</div>`,b:`<div class="fl">${z.tip}</div>`});
+  const n=CHS[c].n;
+  for(let e=1;e<=n;e++){const its=items(c,e);for(let i=0;i<its.length&&i<2;i++){try{const q=fcQ(its[i],c);d.push({k:'Exercice '+e,f:q.f,b:q.b})}catch(x){}}}
+  return d}
+function cardsHTML(c){
+  if(!fcd[c])fcd[c]=fcDeck(c);const d=fcd[c];if(fc>=d.length)fc=0;const x=d[fc];
+  return`<div class="fcw"><div class="fcn">Carte ${fc+1} / ${d.length}</div><button class="fcard ${fcf?'back':''}" data-fcflip="1" aria-label="Retourner la carte"><span class="fck">${x.k}${fcf?' · réponse':''}</span><div class="fcb">${fcf?x.b:x.f}</div><span class="fch">${fcf?'':'Touche pour voir la réponse'}</span></button><div class="fcbar"><button class="btn ghost" data-fcn="-1">←</button><button class="btn ghost" data-fcn="s">🔀 Mélanger</button><button class="btn" data-fcn="1">Suivante →</button></div></div>`}
 function render(){
   $('#vFl').setAttribute('aria-pressed',view=='fleur');$('#vAt').setAttribute('aria-pressed',view=='at');$('#vEx').setAttribute('aria-pressed',view=='ex');
   $('#chs').style.display=view=='ex'?'':'none';
@@ -355,18 +383,20 @@ function render(){
     const side=el?(st.done?`<div class="badge ${st.ok?'ok':'ko'}">${st.ok?'✓':'✗'}</div>`:`<button class="btn small" data-val="${i}">Valider</button>`):'';
     return`<div class="it"><span class="l">${L})</span>${it.vis?`<div class="vis">${it.vis}</div>`:''}<div class="q ${it.kind?'':'qt'}">${q}</div><div class="side">${side}</div></div>`}).join('');
   let n=0,nd=0;its.forEach((_,i)=>{const st=S[cur+sr+lv+i];if(st&&st.done){nd++;if(st.ok)n++}});if(el&&nd==3)done[cur+sr+lv]=1;
-  const lvb0=`<button style="--c:var(--blue)" aria-pressed="${lv==-1}" data-e="-1">📖 Leçon</button>`,lvb=[0,...Array(c.n).keys()].map((_,k)=>k).slice(0,c.n+1).map(e=>`<button style="--c:var(--blue)" aria-pressed="${e==lv}" class="${done[cur+sr+e]?'done':''}" data-e="${e}">${e}</button>`).join('');
-  $('#main').innerHTML=`<div class="sbar"><span class="code">${cur}</span><span>${c.t}</span></div><p class="cons"><b>Consigne :</b> ${c.cons}${c.leg?`<br><small>${c.leg}</small>`:''}</p>
-   <div class="lvl">${lvb0}<span>Exercice</span>${lvb}</div>${lv==-1?lessonHTML(cur):lv==0?m0html(c,its,rows):'<div class="x3">'+rows+'</div>'}
-   <div class="bar">${el||lv==-1?'':`<button class="btn" id="bShow">${shown?'Cacher':'Montrer'} la correction</button>`}<span style="${lv==-1?'visibility:hidden':''}">Série ${[0,1,2].map(k=>`<button class="btn ghost small" data-s="${k}" style="${k==sr?'background:var(--blue);color:#fff':''}">${k+1}</button>`).join(' ')}</span>${el&&lv>0?`<span class="score">Juste : <b>${n}</b> / 3${nd==3?(n==3?' · Bravo !':' · Courage !'):''}</span>`:''}<button class="btn ghost" id="bPrev">←</button><button class="btn ghost" id="bNext">Exercice suivant →</button></div>
-   <div class="note">${mode=='eleve'?'<b>Élève :</b> je regarde, je tape ma réponse et j’appuie sur « Valider ». L’application dit juste ou faux. J’écris aussi dans mon cahier.':'<b>Au tableau :</b> on projette, on répond à l’oral puis la correction s’affiche.'}</div>`;
+  const lvb0=`<button style="--c:var(--blue)" aria-pressed="${lv==-1}" data-e="-1">📖 Leçon</button><button style="--c:var(--blue)" aria-pressed="${lv==-2}" data-e="-2">🃏 Cartes</button>`,lvb=[0,...Array(c.n).keys()].map((_,k)=>k).slice(0,c.n+1).map(e=>`<button style="--c:var(--blue)" aria-pressed="${e==lv}" class="${done[cur+sr+e]?'done':''}" data-e="${e}">${e}</button>`).join('');
+  $('#main').innerHTML=`<div class="sbar"><span class="code">${cur}</span><span>${c.t}</span></div><p class="cons" style="${lv<0?'display:none':''}"><b>Consigne :</b> ${c.cons}${c.leg?`<br><small>${c.leg}</small>`:''}</p>
+   <div class="lvl">${lvb0}${lv==-2?'':`<span>Exercice</span>${lvb}`}</div>${lv==-2?cardsHTML(cur):lv==-1?lessonHTML(cur):lv==0?m0html(c,its,rows):'<div class="x3">'+rows+'</div>'}
+   <div class="bar" style="${lv==-2?'display:none':''}">${el||lv==-1?'':`<button class="btn" id="bShow">${shown?'Cacher':'Montrer'} la correction</button>`}<span style="${lv==-1?'visibility:hidden':''}">Série ${[0,1,2].map(k=>`<button class="btn ghost small" data-s="${k}" style="${k==sr?'background:var(--blue);color:#fff':''}">${k+1}</button>`).join(' ')}</span>${el&&lv>0?`<span class="score">Juste : <b>${n}</b> / 3${nd==3?(n==3?' · Bravo !':' · Courage !'):''}</span>`:''}<button class="btn ghost" id="bPrev">←</button><button class="btn ghost" id="bNext">Exercice suivant →</button></div>
+   <div class="note" style="${lv==-2?'display:none':''}">${mode=='eleve'?'<b>Élève :</b> je regarde, je tape ma réponse et j’appuie sur « Valider ». L’application dit juste ou faux. J’écris aussi dans mon cahier.':'<b>Au tableau :</b> on projette, on répond à l’oral puis la correction s’affiche.'}</div>`;
   const sg=$('.sbar');sg.insertAdjacentHTML('beforeend',`<span style="margin-left:auto" class="seg"><button data-m="tab" aria-pressed="${mode=='tab'}">Au tableau</button><button data-m="eleve" aria-pressed="${mode=='eleve'}">Élève</button></span>`)}
 function keep(){document.querySelectorAll('input.ans').forEach(x=>{const k=cur+sr+lv+x.dataset.i,st=S[k]||(S[k]={});st.v=st.v||[];st.v[+x.dataset.b]=x.value})}
 document.addEventListener('click',e=>{const o=e.target.closest('[data-op],[data-tg]');if(o&&mode=='eleve'&&view=='ex'&&o.dataset.i!==undefined){keep();const i=+o.dataset.i,k=cur+sr+lv+i,st=S[k]||(S[k]={});if(st.done)return;if(o.dataset.op!==undefined)st.pick=o.dataset.op;else{const t=+o.dataset.tg;st.seq=st.seq||[];st.seq=st.seq.includes(t)?st.seq.filter(x=>x!==t):[...st.seq,t]}render();return}
   const b=e.target.closest('button');if(!b)return;
   if(b.id=='vFl'){view='fleur';render()}else if(b.id=='vAt'){target=null;view='at';render()}else if(b.id=='vEx'){view='ex';render()}
-  else if(b.dataset.c){cur=b.dataset.c;lv=-1;shown=false;chBtns();render()}
-  else if(b.dataset.e!==undefined){lv=+b.dataset.e;shown=false;render()}
+  else if(b.dataset.c){cur=b.dataset.c;lv=-1;fc=0;fcf=false;shown=false;chBtns();render()}
+  else if(b.dataset.e!==undefined){lv=+b.dataset.e;shown=false;fc=0;fcf=false;render()}
+  else if(b.dataset.fcflip){fcf=!fcf;render()}
+  else if(b.dataset.fcn!==undefined){const d=fcd[cur];if(b.dataset.fcn=='s'){for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}fc=0}else fc=(fc+ +b.dataset.fcn+d.length)%d.length;fcf=false;render()}
   else if(b.dataset.s!==undefined){sr=+b.dataset.s;shown=false;render()}
   else if(b.dataset.m){mode=b.dataset.m;render()}
   else if(b.id=='bShow'){shown=!shown;render()}
