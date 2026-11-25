@@ -121,10 +121,11 @@ body.focus.menu .chs{display:flex!important;flex-direction:column;position:fixed
 .fcb b{color:var(--ans,#1c64c4)}.fch{position:absolute;bottom:8px;font-size:14px;color:var(--muted)}
 .fcbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 @media (max-width:860px){.chs{flex-wrap:wrap;overflow:visible;gap:6px}.chs .grp{display:none}.chs button{padding:4px 6px;gap:0}.chs button .cd{font-size:20px;padding:2px 12px}.fcard{font-size:24px;min-height:260px}}
+.rgb{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:center;margin:6px 0}.rgb span{color:var(--muted,var(--mut,#666));font-size:16px}.rgb button{border:2px solid var(--pr,var(--blue,var(--c,#555)));background:var(--panel,var(--card,#fff));color:var(--pr,var(--blue,var(--c,#222)));border-radius:20px;padding:2px 12px;font:inherit;font-weight:700;cursor:pointer}.rgb button[aria-pressed=true]{background:var(--pr,var(--blue,var(--c,#555)));color:#fff}
 </style></head>
 <body>
 <header><div><h1>Dans mon cahier ! CP – Nombres et calculs</h1><div class="sub">Atelier de manipulation et exercices corrigés par l’application</div></div>
-<div class="seg"><button id="vEx" aria-pressed="true">✏️ Exercices</button><button id="vAt" aria-pressed="false">🧮 Atelier</button><button id="vFl" aria-pressed="false">✿ Fleur des nombres</button></div></header>
+<div class="seg"><button id="vEx" aria-pressed="true">✏️ Exercices</button><button id="vCa" aria-pressed="false">🃏 Cartes</button><button id="vAt" aria-pressed="false">🧮 Atelier</button><button id="vFl" aria-pressed="false">✿ Fleur des nombres</button></div></header>
 <div class="app" id="app"><nav class="chs" id="chs"></nav><main class="board" id="main"></main></div>
 <script>
 const $=s=>document.querySelector(s);
@@ -339,7 +340,7 @@ const ORDER=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q'
 const TITLES={D:'Les nombres de 10 à 69',F:'Les nombres de 60 à 99',G:'Se repérer dans le tableau des nombres',H:'Comparer des nombres',I:'Ranger plusieurs nombres',J:'Placer des nombres sur une demi-droite graduée',K:'Encadrer un nombre',L:'Sens de l’addition',M:'Addition posée',N:'Addition à trous',O:'Sens de la soustraction',P:'Décomposition langagière des nombres',Q:'Sens de la multiplication : addition itérée',S:'Reculer de 2 en 2, de 5 en 5 ou de 10 en 10',T:'Sens de la division : soustraction itérée',U:'Additionner et soustraire',V:'Compléter une suite organisée',W:'Les nombres ordinaux'};
 const GRP={A:'Connaître les nombres entiers',H:'Manipuler les nombres entiers',L:'Les 4 opérations',V:'Suites et ordinaux'};
 /* ---------- état ---------- */
-let FR=new Set(),target=null,GV=null,fn=17,view='ex',cur='A',lv=1,sr=0,mode='eleve',shown=false,S={},done={},foc=false,menu=false,fc=0,fcf=false,fcd={};
+let FR=new Set(),target=null,GV=null,fn=17,view='ex',cur='A',lv=1,sr=0,mode='eleve',shown=false,S={},done={},foc=false,menu=false,fc=0,fcf=false,fcd={},rg=0;
 const SPEC={};
 function items(c,e){const k=c+'|'+sr+'|'+e;if(!SPEC[k])SPEC[k]=CHS[c].gen(e,rngf(k)).map(it=>{if(!it.tpl&&!it.kind)it.tpl=(it.pre?it.pre+' ':'')+'___'+(it.post?' '+it.post:'');return it});return SPEC[k]}
 function chBtns(){let h='';ORDER.forEach(c=>{if(GRP[c])h+=`<div class="grp">${GRP[c]}</div>`;const d=CHS[c];h+=`<button data-c="${c}" ${d?'':'disabled'} aria-current="${c==cur}"><span class="cd">${c}</span><span class="sh">${d?d.t:TITLES[c]}${d?'':' · bientôt'}</span></button>`});$('#chs').innerHTML=h}
@@ -364,13 +365,14 @@ function fcDeck(c){
   z.ex.forEach(x=>d.push({k:'Exemple',f:`<div class="fq">Je regarde un exemple</div>`,b:`<div class="fl">${x}</div>`}));
   d.push({k:'Astuce',f:`<div class="fq">💡 Mon astuce</div>`,b:`<div class="fl">${z.tip}</div>`});
   const n=CHS[c].n;
-  for(let e=1;e<=n;e++){const its=items(c,e);for(let i=0;i<its.length&&i<2;i++){try{const q=fcQ(its[i],c);d.push({k:'Exercice '+e,f:q.f,b:q.b})}catch(x){}}}
+  const s0=sr;for(let q0=0;q0<3;q0++){sr=q0;for(let e=1;e<=n;e++){const its=items(c,e);for(let i=0;i<its.length&&i<(q0?1:2);i++){try{const q=fcQ(its[i],c),t=plain([its[i].tpl,its[i].pre,its[i].post,[].concat(its[i].ans).join(' '),(its[i].opts||[]).join(' ')].join(' ')),m=(t.match(/\d+/g)||[]).map(Number);d.push({k:'Exercice '+e,f:q.f,b:q.b,ex:1,mx:m.length?Math.max(...m):0})}catch(x){}}}}sr=s0;
   return d}
+function fcView(c){if(!fcd[c])fcd[c]=fcDeck(c);return fcd[c].filter(x=>!x.ex||!rg||x.mx<=rg)}
 function cardsHTML(c){
-  if(!fcd[c])fcd[c]=fcDeck(c);const d=fcd[c];if(fc>=d.length)fc=0;const x=d[fc];
-  return`<div class="fcw"><div class="fcn">Carte ${fc+1} / ${d.length}</div><button class="fcard ${fcf?'back':''}" data-fcflip="1" aria-label="Retourner la carte"><span class="fck">${x.k}${fcf?' · réponse':''}</span><div class="fcb">${fcf?x.b:x.f}</div><span class="fch">${fcf?'':'Touche pour voir la réponse'}</span></button><div class="fcbar"><button class="btn ghost" data-fcn="-1">←</button><button class="btn ghost" data-fcn="s">🔀 Mélanger</button><button class="btn" data-fcn="1">Suivante →</button></div></div>`}
+  const d=fcView(c);if(fc>=d.length)fc=0;const x=d[fc];
+  return`<div class="fcw">`+`<div class="rgb"><span>Nombres jusqu’à :</span>${[[10,'10'],[20,'20'],[59,'59'],[100,'100'],[0,'Tous']].map(r=>`<button data-rg="${r[0]}" aria-pressed="${rg==r[0]}">${r[1]}</button>`).join('')}</div>`+`<div class="fcn">Carte ${fc+1} / ${d.length}</div><button class="fcard ${fcf?'back':''}" data-fcflip="1" aria-label="Retourner la carte"><span class="fck">${x.k}${fcf?' · réponse':''}</span><div class="fcb">${fcf?x.b:x.f}</div><span class="fch">${fcf?'':'Touche pour voir la réponse'}</span></button><div class="fcbar"><button class="btn ghost" data-fcn="-1">←</button><button class="btn ghost" data-fcn="s">🔀 Mélanger</button><button class="btn" data-fcn="1">Suivante →</button></div></div>`}
 function render(){
-  $('#vFl').setAttribute('aria-pressed',view=='fleur');$('#vAt').setAttribute('aria-pressed',view=='at');$('#vEx').setAttribute('aria-pressed',view=='ex');
+  $('#vCa').setAttribute('aria-pressed',view=='ex'&&lv==-2);$('#vFl').setAttribute('aria-pressed',view=='fleur');$('#vAt').setAttribute('aria-pressed',view=='at');$('#vEx').setAttribute('aria-pressed',view=='ex'&&lv!=-2);
   $('#chs').style.display=view=='ex'?'':'none';
   $('#app').style.gridTemplateColumns=view=='ex'?'':'1fr';
   if(view=='fleur')return fleur();
@@ -383,20 +385,21 @@ function render(){
     const side=el?(st.done?`<div class="badge ${st.ok?'ok':'ko'}">${st.ok?'✓':'✗'}</div>`:`<button class="btn small" data-val="${i}">Valider</button>`):'';
     return`<div class="it"><span class="l">${L})</span>${it.vis?`<div class="vis">${it.vis}</div>`:''}<div class="q ${it.kind?'':'qt'}">${q}</div><div class="side">${side}</div></div>`}).join('');
   let n=0,nd=0;its.forEach((_,i)=>{const st=S[cur+sr+lv+i];if(st&&st.done){nd++;if(st.ok)n++}});if(el&&nd==3)done[cur+sr+lv]=1;
-  const lvb0=`<button style="--c:var(--blue)" aria-pressed="${lv==-1}" data-e="-1">📖 Leçon</button><button style="--c:var(--blue)" aria-pressed="${lv==-2}" data-e="-2">🃏 Cartes</button>`,lvb=[0,...Array(c.n).keys()].map((_,k)=>k).slice(0,c.n+1).map(e=>`<button style="--c:var(--blue)" aria-pressed="${e==lv}" class="${done[cur+sr+e]?'done':''}" data-e="${e}">${e}</button>`).join('');
+  const lvb0=`<button style="--c:var(--blue)" aria-pressed="${lv==-1}" data-e="-1">📖 Leçon</button>`,lvb=[0,...Array(c.n).keys()].map((_,k)=>k).slice(0,c.n+1).map(e=>`<button style="--c:var(--blue)" aria-pressed="${e==lv}" class="${done[cur+sr+e]?'done':''}" data-e="${e}">${e}</button>`).join('');
   $('#main').innerHTML=`<div class="sbar"><span class="code">${cur}</span><span>${c.t}</span></div><p class="cons" style="${lv<0?'display:none':''}"><b>Consigne :</b> ${c.cons}${c.leg?`<br><small>${c.leg}</small>`:''}</p>
    <div class="lvl">${lvb0}${lv==-2?'':`<span>Exercice</span>${lvb}`}</div>${lv==-2?cardsHTML(cur):lv==-1?lessonHTML(cur):lv==0?m0html(c,its,rows):'<div class="x3">'+rows+'</div>'}
    <div class="bar" style="${lv==-2?'display:none':''}">${el||lv==-1?'':`<button class="btn" id="bShow">${shown?'Cacher':'Montrer'} la correction</button>`}<span style="${lv==-1?'visibility:hidden':''}">Série ${[0,1,2].map(k=>`<button class="btn ghost small" data-s="${k}" style="${k==sr?'background:var(--blue);color:#fff':''}">${k+1}</button>`).join(' ')}</span>${el&&lv>0?`<span class="score">Juste : <b>${n}</b> / 3${nd==3?(n==3?' · Bravo !':' · Courage !'):''}</span>`:''}<button class="btn ghost" id="bPrev">←</button><button class="btn ghost" id="bNext">Exercice suivant →</button></div>
    <div class="note" style="${lv==-2?'display:none':''}">${mode=='eleve'?'<b>Élève :</b> je regarde, je tape ma réponse et j’appuie sur « Valider ». L’application dit juste ou faux. J’écris aussi dans mon cahier.':'<b>Au tableau :</b> on projette, on répond à l’oral puis la correction s’affiche.'}</div>`;
-  const sg=$('.sbar');sg.insertAdjacentHTML('beforeend',`<span style="margin-left:auto" class="seg"><button data-m="tab" aria-pressed="${mode=='tab'}">Au tableau</button><button data-m="eleve" aria-pressed="${mode=='eleve'}">Élève</button></span>`)}
+  const sg=$('.sbar');sg.insertAdjacentHTML('beforeend',`<span style="margin-left:auto" class="seg"><button data-m="tab" aria-pressed="${mode=='tab'}">Au tableau</button><button data-m="eleve" aria-pressed="${mode=='eleve'}">Élève</button><button data-fs="1" title="Plein écran" aria-label="Plein écran">⛶</button></span>`)}
 function keep(){document.querySelectorAll('input.ans').forEach(x=>{const k=cur+sr+lv+x.dataset.i,st=S[k]||(S[k]={});st.v=st.v||[];st.v[+x.dataset.b]=x.value})}
 document.addEventListener('click',e=>{const o=e.target.closest('[data-op],[data-tg]');if(o&&mode=='eleve'&&view=='ex'&&o.dataset.i!==undefined){keep();const i=+o.dataset.i,k=cur+sr+lv+i,st=S[k]||(S[k]={});if(st.done)return;if(o.dataset.op!==undefined)st.pick=o.dataset.op;else{const t=+o.dataset.tg;st.seq=st.seq||[];st.seq=st.seq.includes(t)?st.seq.filter(x=>x!==t):[...st.seq,t]}render();return}
   const b=e.target.closest('button');if(!b)return;
-  if(b.id=='vFl'){view='fleur';render()}else if(b.id=='vAt'){target=null;view='at';render()}else if(b.id=='vEx'){view='ex';render()}
+  if(b.id=='vFl'){view='fleur';render()}else if(b.id=='vAt'){target=null;view='at';render()}else if(b.id=='vEx'){view='ex';if(lv==-2)lv=-1;render()}else if(b.id=='vCa'){view='ex';lv=-2;fc=0;fcf=false;render()}
   else if(b.dataset.c){cur=b.dataset.c;lv=-1;fc=0;fcf=false;shown=false;chBtns();render()}
   else if(b.dataset.e!==undefined){lv=+b.dataset.e;shown=false;fc=0;fcf=false;render()}
   else if(b.dataset.fcflip){fcf=!fcf;render()}
-  else if(b.dataset.fcn!==undefined){const d=fcd[cur];if(b.dataset.fcn=='s'){for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}fc=0}else fc=(fc+ +b.dataset.fcn+d.length)%d.length;fcf=false;render()}
+  else if(b.dataset.rg!==undefined){rg=+b.dataset.rg;fc=0;fcf=false;render()}
+  else if(b.dataset.fcn!==undefined){const d=fcView(cur);if(b.dataset.fcn=='s'){const P=fcd[cur];for(let i=P.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[P[i],P[j]]=[P[j],P[i]]}fc=0}else fc=(fc+ +b.dataset.fcn+(d.length||1))%(d.length||1);fcf=false;render()}
   else if(b.dataset.s!==undefined){sr=+b.dataset.s;shown=false;render()}
   else if(b.dataset.m){mode=b.dataset.m;render()}
   else if(b.id=='bShow'){shown=!shown;render()}
@@ -486,4 +489,12 @@ function aEuro(st){const V=[100,200,500,1000,2000,5000];GV=()=>[...document.quer
   $('#clr').onclick=()=>{fr.innerHTML='';upd()}}
 chBtns();render();
 
-</script></body></html>
+</script><style id="fsxcss">#fsx{position:fixed;top:max(8px,env(safe-area-inset-top,0px));right:max(8px,env(safe-area-inset-right,0px));z-index:9000;border:2px solid var(--c,var(--pr,var(--blue,#555)));background:var(--panel,var(--card,#fff));color:var(--c,var(--pr,var(--blue,#222)));border-radius:12px;padding:6px 12px;font:700 16px/1.2 system-ui,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)}body:not(.focus) #fsx{display:none}</style>
+<button id="fsx" type="button">✕ Quitter le plein écran</button>
+<script>(function(){const b=document.getElementById('fsx');
+function set(f){document.body.classList.toggle('focus',f);try{if(f&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(function(){});else if(!f&&document.fullscreenElement)document.exitFullscreen().catch(function(){})}catch(e){}}
+b.addEventListener('click',function(){set(false)});
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-fs]');if(t){e.stopImmediatePropagation();e.preventDefault();set(!document.body.classList.contains('focus'))}},true);
+document.addEventListener('fullscreenchange',function(){if(!document.fullscreenElement)document.body.classList.remove('focus')});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.body.classList.contains('focus'))set(false)});
+})();</script></body></html>
